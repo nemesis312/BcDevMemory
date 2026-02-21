@@ -1,0 +1,27 @@
+{
+  "DevMemory": {
+    "StorageProvider": "PostgreSQL",
+    "PostgreSQL": {
+      "ConnectionString": "Host=localhost;Port=5432;Database=devmemory;Username=devmemory_user;Password=CHANGE_ME;Multiplexing=true"
+    },
+    "SQLite": {
+      "DatabasePath": "~/.devmemory/devmemory.db"
+    },
+    "Neo4j": {
+      "Uri": "bolt://localhost:7687",
+      "User": "neo4j",
+      "Password": "CHANGE_ME",
+      "Database": "neo4j"
+    },
+    "Server": {
+      "Port": 7437
+    }
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*"
+}

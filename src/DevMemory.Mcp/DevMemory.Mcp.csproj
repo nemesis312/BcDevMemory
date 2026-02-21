@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\DevMemory.Core\DevMemory.Core.csproj" />
+    <ProjectReference Include="..\DevMemory.Infrastructure\DevMemory.Infrastructure.csproj" />
+    <ProjectReference Include="..\DevMemory.Infrastructure.Neo4j\DevMemory.Infrastructure.Neo4j.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    
+    <!-- Assembly info -->
+    <AssemblyName>devmemory-mcp</AssemblyName>
+    <Product>DevMemory MCP Server</Product>
+    <Description>Persistent memory server for AI coding agents</Description>
+  </PropertyGroup>
+
+</Project>

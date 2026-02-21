@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/DevMemory.Api/DevMemory.Api.csproj" />
+    <Project Path="src/DevMemory.Cli/DevMemory.Cli.csproj" />
+    <Project Path="src/DevMemory.Core/DevMemory.Core.csproj" />
+    <Project Path="src/DevMemory.Infrastructure/DevMemory.Infrastructure.csproj" />
+    <Project Path="src/DevMemory.Infrastructure.Neo4j/DevMemory.Infrastructure.Neo4j.csproj" />
+    <Project Path="src/DevMemory.Mcp/DevMemory.Mcp.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/DevMemory.Core.Tests/DevMemory.Core.Tests.csproj" />
+    <Project Path="tests/DevMemory.Infrastructure.Tests/DevMemory.Infrastructure.Tests.csproj" />
+    <Project Path="tests/DevMemory.Integration.Tests/DevMemory.Integration.Tests.csproj" />
+  </Folder>
+</Solution>

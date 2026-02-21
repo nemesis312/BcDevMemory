@@ -1,0 +1,100 @@
+## ── Build outputs ─────────────────────────────────────────────────────────────
+[Bb]in/
+[Oo]bj/
+out/
+publish/
+artifacts/
+
+## ── .NET ──────────────────────────────────────────────────────────────────────
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+project.lock.json
+project.fragment.lock.json
+.vs/
+_UpgradeReport_Files/
+Backup*/
+UpgradeLog*.htm
+UpgradeLog*.XML
+*.nupkg
+*.snupkg
+*.nuspec
+nuget.config.local
+
+## ── Secrets & local configuration (NEVER commit) ─────────────────────────────
+appsettings.Development.json
+appsettings.development.json
+appsettings.Local.json
+appsettings.local.json
+appsettings.*.local.json
+appsettings.Secrets.json
+secrets.json
+.secrets
+*.pfx
+*.p12
+*.pem
+*.key
+*.crt
+*.cer
+*.env
+.env
+.env.*
+!.env.example
+
+## ── dotnet user-secrets ───────────────────────────────────────────────────────
+# Stored in OS-level secret store, never in repo
+# %APPDATA%\Microsoft\UserSecrets\ (Windows)
+# ~/.microsoft/usersecrets/ (Linux/macOS)
+
+## ── SQLite databases ──────────────────────────────────────────────────────────
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+## ── Logs ──────────────────────────────────────────────────────────────────────
+*.log
+logs/
+log/
+
+## ── OS generated ──────────────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+## ── IDE ───────────────────────────────────────────────────────────────────────
+.idea/
+.vscode/settings.json
+.vscode/launch.json
+.vscode/tasks.json
+*.swp
+*.swo
+*~
+
+## ── Test results ──────────────────────────────────────────────────────────────
+TestResults/
+coverage/
+*.coverage
+*.coveragexml
+*.trx
+
+## ── NuGet ─────────────────────────────────────────────────────────────────────
+packages/
+*.nupkg
+.nuget/
+
+## ── Docker ────────────────────────────────────────────────────────────────────
+.dockerignore.local
+
+## ── Temporary files ───────────────────────────────────────────────────────────
+*.tmp
+*.temp
+*.bak
+*.orig

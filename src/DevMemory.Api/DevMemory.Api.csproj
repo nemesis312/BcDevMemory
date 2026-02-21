@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <ProjectReference Include="..\DevMemory.Core\DevMemory.Core.csproj" />
+    <ProjectReference Include="..\DevMemory.Infrastructure\DevMemory.Infrastructure.csproj" />
+    <ProjectReference Include="..\DevMemory.Infrastructure.Neo4j\DevMemory.Infrastructure.Neo4j.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+</Project>
