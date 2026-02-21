@@ -1,5 +1,5 @@
 #!/bin/bash
-# Publish DevMemory MCP for Windows and macOS
+# Publish DevMemory MCP for Windows, macOS, and Linux
 # Usage: ./scripts/publish-all.sh
 
 set -e
@@ -41,6 +41,26 @@ dotnet publish src/DevMemory.Mcp -c Release -r osx-x64 \
     -o "$PUBLISH_DIR/osx-x64" \
     --nologo -v q
 
+# Linux x64
+echo "  → Linux x64..."
+dotnet publish src/DevMemory.Mcp -c Release -r linux-x64 \
+    --self-contained true \
+    -p:PublishSingleFile=true \
+    -p:EnableCompressionInSingleFile=true \
+    -p:IncludeNativeLibrariesForSelfExtract=true \
+    -o "$PUBLISH_DIR/linux-x64" \
+    --nologo -v q
+
+# Linux ARM64 (Raspberry Pi 4+, AWS Graviton, etc.)
+echo "  → Linux ARM64..."
+dotnet publish src/DevMemory.Mcp -c Release -r linux-arm64 \
+    --self-contained true \
+    -p:PublishSingleFile=true \
+    -p:EnableCompressionInSingleFile=true \
+    -p:IncludeNativeLibrariesForSelfExtract=true \
+    -o "$PUBLISH_DIR/linux-arm64" \
+    --nologo -v q
+
 echo ""
 echo "✅ Published executables:"
 echo ""
@@ -52,6 +72,8 @@ cd "$PUBLISH_DIR"
 zip -j devmemory-mcp-win-x64.zip win-x64/devmemory-mcp.exe
 zip -j devmemory-mcp-osx-arm64.zip osx-arm64/devmemory-mcp
 zip -j devmemory-mcp-osx-x64.zip osx-x64/devmemory-mcp
+zip -j devmemory-mcp-linux-x64.zip linux-x64/devmemory-mcp
+zip -j devmemory-mcp-linux-arm64.zip linux-arm64/devmemory-mcp
 
 echo ""
 echo "✅ Archives created:"
