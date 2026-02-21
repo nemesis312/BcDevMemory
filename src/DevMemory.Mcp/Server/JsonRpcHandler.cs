@@ -44,7 +44,9 @@ public sealed class JsonRpcHandler
         }
         catch
         {
-            return Serialize(McpResponse.ParseError());
+            // Don't send ParseError with id:null — MCP clients reject null ids.
+            await Console.Error.WriteLineAsync("[devmemory] Failed to parse incoming JSON-RPC message");
+            return null;
         }
 
         // Extract the raw id value to echo back in responses
@@ -55,12 +57,17 @@ public sealed class JsonRpcHandler
             _                    => null,
         };
 
+        // Notifications have no id — never send a response for them.
+        if (request.IsNotification)
+        {
+            return null;
+        }
+
         try
         {
             var response = request.Method switch
             {
                 "initialize"  => HandleInitialize(id),
-                "initialized" => null,                          // notification — no reply
                 "ping"        => HandlePing(id),
                 "tools/list"  => HandleToolsList(id),
                 "tools/call"  => await HandleToolCallAsync(id, request, cancellationToken),

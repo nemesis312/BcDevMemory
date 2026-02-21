@@ -34,7 +34,8 @@ public sealed class StdioTransport
             catch (Exception ex)
             {
                 await Console.Error.WriteLineAsync($"[devmemory] Unhandled: {ex.Message}");
-                response = handler.SerializeInternalError(null, ex.Message);
+                // Don't send error responses with id:null — MCP clients reject null ids.
+                response = null;
             }
 
             if (response is not null)
