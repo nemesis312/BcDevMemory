@@ -84,38 +84,38 @@ Download the binary, add 5 lines of JSON to your MCP config, done. SQLite requir
 
 ## Features
 
-| Feature | Details |
-|---------|---------|
-| **MCP-native** | Implements the Model Context Protocol via stdio transport |
-| **3 storage backends** | SQLite (local), PostgreSQL (teams), Neo4j (graph) |
-| **Session management** | Start/end sessions, persist summaries, survive context compaction |
-| **Full-text search** | Search across all memories with `mem_search` |
+| Feature                  | Details                                                             |
+| ------------------------ | ------------------------------------------------------------------- |
+| **MCP-native**           | Implements the Model Context Protocol via stdio transport           |
+| **3 storage backends**   | SQLite (local), PostgreSQL (teams), Neo4j (graph)                   |
+| **Session management**   | Start/end sessions, persist summaries, survive context compaction   |
+| **Full-text search**     | Search across all memories with `mem_search`                        |
 | **13 observation types** | `bugfix`, `architecture-decision`, `pattern`, `discovery`, and more |
-| **Graph relationships** | Link observations, trace decision chains (Neo4j) |
-| **Privacy protection** | `<private>` tag stripping at the repository layer |
-| **Cross-platform** | Native binaries for Windows x64, macOS ARM64/x64, Linux x64/ARM64 |
-| **No runtime required** | Single self-contained executable |
-| **CLI included** | Export, import, search, stats — all from the terminal |
+| **Graph relationships**  | Link observations, trace decision chains (Neo4j)                    |
+| **Privacy protection**   | `<private>` tag stripping at the repository layer                   |
+| **Cross-platform**       | Native binaries for Windows x64, macOS ARM64/x64, Linux x64/ARM64   |
+| **No runtime required**  | Single self-contained executable                                    |
+| **CLI included**         | Export, import, search, stats — all from the terminal               |
 
 ---
 
 ## MCP Tools Reference
 
-| Tool | What it does |
-|------|-------------|
-| `mem_save` | Save a structured observation with type, title, content, tags |
-| `mem_search` | Full-text search across all saved memories |
-| `mem_context` | Load recent session history for a project |
-| `mem_get_observation` | Retrieve a specific observation by ID |
-| `mem_timeline` | Get chronological context around an observation |
-| `mem_session_start` | Explicitly start a new coding session |
-| `mem_session_end` | End the session with a summary |
-| `mem_session_summary` | Update the current session summary mid-session |
-| `mem_stats` | Total observations, sessions, projects at a glance |
-| `mem_save_prompt` | Save a user prompt to the current session |
-| `mem_link` *(Neo4j)* | Create a typed relationship between two observations |
-| `mem_related` *(Neo4j)* | Find observations transitively related to a given one |
-| `mem_decision_chain` *(Neo4j)* | Trace the chain of decisions that led to a conclusion |
+| Tool                           | What it does                                                  |
+| ------------------------------ | ------------------------------------------------------------- |
+| `mem_save`                     | Save a structured observation with type, title, content, tags |
+| `mem_search`                   | Full-text search across all saved memories                    |
+| `mem_context`                  | Load recent session history for a project                     |
+| `mem_get_observation`          | Retrieve a specific observation by ID                         |
+| `mem_timeline`                 | Get chronological context around an observation               |
+| `mem_session_start`            | Explicitly start a new coding session                         |
+| `mem_session_end`              | End the session with a summary                                |
+| `mem_session_summary`          | Update the current session summary mid-session                |
+| `mem_stats`                    | Total observations, sessions, projects at a glance            |
+| `mem_save_prompt`              | Save a user prompt to the current session                     |
+| `mem_link` _(Neo4j)_           | Create a typed relationship between two observations          |
+| `mem_related` _(Neo4j)_        | Find observations transitively related to a given one         |
+| `mem_decision_chain` _(Neo4j)_ | Trace the chain of decisions that led to a conclusion         |
 
 ---
 
@@ -125,17 +125,18 @@ Download the binary, add 5 lines of JSON to your MCP config, done. SQLite requir
 
 Go to the [Releases page](../../releases) and download the binary for your platform:
 
-| Platform | File |
-|----------|------|
-| Windows x64 | `devmemory-mcp-win-x64.zip` |
-| macOS Apple Silicon (M1–M4) | `devmemory-mcp-osx-arm64.zip` |
-| macOS Intel | `devmemory-mcp-osx-x64.zip` |
-| Linux x64 | `devmemory-mcp-linux-x64.zip` |
+| Platform                      | File                            |
+| ----------------------------- | ------------------------------- |
+| Windows x64                   | `devmemory-mcp-win-x64.zip`     |
+| macOS Apple Silicon (M1–M4)   | `devmemory-mcp-osx-arm64.zip`   |
+| macOS Intel                   | `devmemory-mcp-osx-x64.zip`     |
+| Linux x64                     | `devmemory-mcp-linux-x64.zip`   |
 | Linux ARM64 (Graviton, Pi 4+) | `devmemory-mcp-linux-arm64.zip` |
 
 ### 2. Extract and place the binary
 
 **macOS:**
+
 ```bash
 mkdir -p ~/.local/bin
 unzip devmemory-mcp-osx-arm64.zip -d ~/.local/bin
@@ -146,6 +147,7 @@ xattr -d com.apple.quarantine ~/.local/bin/devmemory-mcp
 ```
 
 **Linux:**
+
 ```bash
 mkdir -p ~/.local/bin
 unzip devmemory-mcp-linux-x64.zip -d ~/.local/bin
@@ -153,6 +155,7 @@ chmod +x ~/.local/bin/devmemory-mcp
 ```
 
 **Windows:** Extract to:
+
 ```
 C:\Users\<YOU>\AppData\Local\devmemory\devmemory-mcp.exe
 ```
@@ -252,7 +255,7 @@ Schema migrations run automatically on first startup. No manual setup required.
 
 ## Graph Memory with Neo4j
 
-For teams that want to understand *how* decisions relate to each other — not just search through them — Neo4j gives you a full knowledge graph.
+For teams that want to understand _how_ decisions relate to each other — not just search through them — Neo4j gives you a full knowledge graph.
 
 ### Quick start with Docker
 
@@ -290,6 +293,7 @@ DevMemory automatically creates all constraints, indexes, and full-text search i
 ### Graph-exclusive tools
 
 **Link two observations:**
+
 ```json
 {
   "fromId": "8a7f3c12-...",
@@ -300,24 +304,26 @@ DevMemory automatically creates all constraints, indexes, and full-text search i
 ```
 
 **Trace a decision chain:**
+
 ```json
 { "id": "8a7f3c12-..." }
 ```
+
 Returns every observation that contributed to a final decision — a full audit trail of your reasoning.
 
 ---
 
 ## Environment Variables Reference
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `DEVMEMORY_STORAGE` | `SQLite` | Backend: `SQLite`, `PostgreSQL`, or `Neo4j` |
-| `DEVMEMORY_SQLITE_PATH` | `~/.devmemory/devmemory.db` | SQLite file path |
-| `DEVMEMORY_POSTGRES_CONNECTION` | *(none)* | Full PostgreSQL connection string |
-| `DEVMEMORY_NEO4J_URI` | `bolt://localhost:7687` | Neo4j Bolt URI |
-| `DEVMEMORY_NEO4J_USER` | `neo4j` | Neo4j username |
-| `DEVMEMORY_NEO4J_PASSWORD` | *(none)* | Neo4j password |
-| `DEVMEMORY_NEO4J_DATABASE` | `neo4j` | Neo4j database name |
+| Variable                        | Default                     | Description                                 |
+| ------------------------------- | --------------------------- | ------------------------------------------- |
+| `DEVMEMORY_STORAGE`             | `SQLite`                    | Backend: `SQLite`, `PostgreSQL`, or `Neo4j` |
+| `DEVMEMORY_SQLITE_PATH`         | `~/.devmemory/devmemory.db` | SQLite file path                            |
+| `DEVMEMORY_POSTGRES_CONNECTION` | _(none)_                    | Full PostgreSQL connection string           |
+| `DEVMEMORY_NEO4J_URI`           | `bolt://localhost:7687`     | Neo4j Bolt URI                              |
+| `DEVMEMORY_NEO4J_USER`          | `neo4j`                     | Neo4j username                              |
+| `DEVMEMORY_NEO4J_PASSWORD`      | _(none)_                    | Neo4j password                              |
+| `DEVMEMORY_NEO4J_DATABASE`      | `neo4j`                     | Neo4j database name                         |
 
 ---
 
@@ -331,18 +337,22 @@ Add this to your `CLAUDE.md`, `copilot-instructions.md`, or agent system prompt:
 You have access to DevMemory persistent memory via MCP tools.
 
 ### Session start
+
 - Call `mem_context` with the current project name to load recent history.
 - Review returned observations before writing any code.
 
 ### During work
+
 - After any significant decision, call `mem_save` with type `architecture-decision`.
 - After fixing a bug, call `mem_save` with type `bugfix`.
 - Save proactively — don't wait to be asked.
 
 ### Session end
+
 - Call `mem_session_end` with a 2–3 sentence summary of what was accomplished.
 
 ### After context reset or compaction
+
 - Immediately call `mem_context` to recover session state.
 ```
 
@@ -352,21 +362,21 @@ You have access to DevMemory persistent memory via MCP tools.
 
 Structure your knowledge with the right type:
 
-| Type | When to use |
-|------|------------|
-| `bugfix` | A bug was found and fixed |
-| `architecture-decision` | A design or structural choice was made |
-| `security-pattern` | A security constraint or pattern |
-| `performance-fix` | A performance optimization |
-| `multi-tenant-rule` | Tenancy isolation or scoping rules |
-| `stored-procedure-pattern` | Database stored procedure patterns |
-| `config-change` | Configuration or environment changes |
-| `pattern` | A reusable code pattern |
-| `discovery` | Something learned about the codebase |
-| `preference` | A user or team preference |
-| `idea` | A future improvement or exploration |
-| `tech-debt` | Known technical debt |
-| `new-feature` | A new feature added |
+| Type                       | When to use                            |
+| -------------------------- | -------------------------------------- |
+| `bugfix`                   | A bug was found and fixed              |
+| `architecture-decision`    | A design or structural choice was made |
+| `security-pattern`         | A security constraint or pattern       |
+| `performance-fix`          | A performance optimization             |
+| `multi-tenant-rule`        | Tenancy isolation or scoping rules     |
+| `stored-procedure-pattern` | Database stored procedure patterns     |
+| `config-change`            | Configuration or environment changes   |
+| `pattern`                  | A reusable code pattern                |
+| `discovery`                | Something learned about the codebase   |
+| `preference`               | A user or team preference              |
+| `idea`                     | A future improvement or exploration    |
+| `tech-debt`                | Known technical debt                   |
+| `new-feature`              | A new feature added                    |
 
 ---
 
@@ -406,8 +416,17 @@ echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}' | ~/.local/bin
 ```
 
 Expected response:
+
 ```json
-{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"devmemory","version":"1.0.0"}}}
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "protocolVersion": "2024-11-05",
+    "capabilities": { "tools": { "listChanged": false } },
+    "serverInfo": { "name": "devmemory", "version": "1.0.0" }
+  }
+}
 ```
 
 ### List available tools
@@ -429,12 +448,13 @@ cp ~/.devmemory/devmemory.db ~/.devmemory/devmemory.db.bak
 Requires [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0).
 
 ```bash
-git clone https://github.com/<YOUR_ORG>/devmemory.git
+git clone https://github.com/nemesis312/devmemory.git
 cd devmemory
 dotnet build src/DevMemory.sln
 ```
 
 To publish a self-contained native binary:
+
 ```bash
 dotnet publish src/DevMemory.Mcp/DevMemory.Mcp.csproj \
   -c Release \
@@ -462,4 +482,4 @@ Issues, ideas, and PRs are welcome. This project follows standard GitHub flow:
 
 ---
 
-*Built for developers who are tired of explaining their own codebase to their AI agent.*
+_Built for developers who are tired of explaining their own codebase to their AI agent._
