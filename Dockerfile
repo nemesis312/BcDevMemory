@@ -25,6 +25,12 @@ RUN dotnet publish src/DevMemory.Mcp/DevMemory.Mcp.csproj \
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
 
+# libgssapi-krb5-2 is required by Npgsql for GSSAPI/Kerberos support.
+# Without it the driver logs a warning and may fail in some auth scenarios.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libgssapi-krb5-2 \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY --from=build /app/publish .
 
 # Defaults — override via environment variables or docker-compose
