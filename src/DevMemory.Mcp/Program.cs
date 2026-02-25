@@ -72,7 +72,14 @@ else
     return 1;
 }
 
-var server = new McpServer(memory, sessions, search, graph);
+var transportMode = Environment.GetEnvironmentVariable("DEVMEMORY_TRANSPORT") ?? "stdio";
+var port          = int.TryParse(Environment.GetEnvironmentVariable("DEVMEMORY_PORT"), out var p) ? p : 8080;
+
+ITransport transport = transportMode.Equals("http", StringComparison.OrdinalIgnoreCase)
+    ? new SseTransport(port)
+    : new StdioTransport();
+
+var server = new McpServer(memory, sessions, search, graph, transport);
 
 using var cts = new CancellationTokenSource();
 Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };

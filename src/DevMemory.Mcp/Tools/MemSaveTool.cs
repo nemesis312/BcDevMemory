@@ -32,7 +32,7 @@ public sealed class MemSaveTool : IMcpTool
             type    = new { type = "string", description = $"Observation type. Valid values: {string.Join(", ", ObservationType.All)}" },
             content = new { type = "string", description = "Full content in What/Why/Where/Learned format" },
             project = new { type = "string", description = "Project name (optional)" },
-            tags    = new { type = "array", items = new { type = "string" }, description = "Optional tags" },
+            tags    = new { type = "string", description = "Optional tags, comma-separated (e.g. \"api, performance, auth\")" },
         },
         required = new[] { "title", "type", "content" },
     };
@@ -52,8 +52,8 @@ public sealed class MemSaveTool : IMcpTool
                 $"Unknown type '{type}'. Valid values: {string.Join(", ", ObservationType.All)}");
 
         var project = arguments.TryGetProperty("project", out var pEl) ? pEl.GetString() : null;
-        var tags    = arguments.TryGetProperty("tags",    out var tEl) && tEl.ValueKind == JsonValueKind.Array
-            ? tEl.EnumerateArray().Select(e => e.GetString() ?? "").Where(s => s.Length > 0).ToArray()
+        var tags    = arguments.TryGetProperty("tags", out var tEl) && tEl.GetString() is { Length: > 0 } tagsStr
+            ? tagsStr.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             : null;
 
         // Get or create the active session for this project

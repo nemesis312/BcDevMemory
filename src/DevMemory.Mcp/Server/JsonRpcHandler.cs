@@ -11,7 +11,6 @@ namespace DevMemory.Mcp.Server;
 /// </summary>
 public sealed class JsonRpcHandler
 {
-    private const string ProtocolVersion = "2024-11-05";
 
     private static readonly JsonSerializerOptions JsonOpts = new()
     {
@@ -31,6 +30,7 @@ public sealed class JsonRpcHandler
             Name        = t.Name,
             Description = t.Description,
             InputSchema = t.InputSchema,
+            Annotations = t.IsReadOnly ? new { readOnlyHint = true } : null,
         }).ToArray();
     }
 
@@ -93,9 +93,9 @@ public sealed class JsonRpcHandler
         Id = id,
         Result = new
         {
-            protocolVersion = ProtocolVersion,
+            protocolVersion = McpConstants.ProtocolVersion,
             capabilities    = new { tools = new { listChanged = false } },
-            serverInfo      = new { name = "devmemory", version = "1.0.0" },
+            serverInfo      = new { name = McpConstants.ServerName, version = McpConstants.ServerVersion },
         },
     };
 

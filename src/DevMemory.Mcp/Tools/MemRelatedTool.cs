@@ -19,6 +19,7 @@ public sealed class MemRelatedTool : IMcpTool
     }
 
     public string Name        => "mem_related";
+    public bool   IsReadOnly  => true;
     public string Description => "Find observations transitively related to a given observation (graph traversal). Neo4j only.";
     public object InputSchema => new
     {

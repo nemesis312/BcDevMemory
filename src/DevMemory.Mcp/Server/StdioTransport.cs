@@ -4,7 +4,7 @@ namespace DevMemory.Mcp.Server;
 /// Reads newline-delimited JSON from stdin, writes responses to stdout.
 /// All diagnostic output MUST use Console.Error (stderr) — stdout is protocol-only.
 /// </summary>
-public sealed class StdioTransport
+public sealed class StdioTransport : ITransport
 {
     public async Task RunAsync(JsonRpcHandler handler, CancellationToken cancellationToken = default)
     {

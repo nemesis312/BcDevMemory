@@ -20,6 +20,7 @@ public sealed class MemDecisionChainTool : IMcpTool
     }
 
     public string Name        => "mem_decision_chain";
+    public bool   IsReadOnly  => true;
     public string Description => "Trace the history behind a decision — find all observations that contributed to it. Neo4j only.";
     public object InputSchema => new
     {

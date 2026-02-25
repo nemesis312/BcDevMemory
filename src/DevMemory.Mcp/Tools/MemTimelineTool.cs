@@ -12,6 +12,7 @@ public sealed class MemTimelineTool : IMcpTool
     public MemTimelineTool(ISearchService search) => _search = search;
 
     public string Name        => "mem_timeline";
+    public bool   IsReadOnly  => true;
     public string Description => "Show observations chronologically around a specific observation — useful for understanding context.";
     public object InputSchema => new
     {

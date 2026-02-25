@@ -12,6 +12,7 @@ public sealed class MemSearchTool : IMcpTool
     public MemSearchTool(ISearchService search) => _search = search;
 
     public string Name        => "mem_search";
+    public bool   IsReadOnly  => true;
     public string Description => "Full-text search across saved observations. Returns ranked results with previews.";
     public object InputSchema => new
     {

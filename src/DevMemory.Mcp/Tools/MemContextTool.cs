@@ -21,7 +21,8 @@ public sealed class MemContextTool : IMcpTool
 
     public MemContextTool(ISessionRepository sessions) => _sessions = sessions;
 
-    public string Name => "mem_context";
+    public string Name       => "mem_context";
+    public bool   IsReadOnly => true;
     public string Description => "Load recent session context for a project. Detects stale sessions from previous contexts. Call this at session start to restore memory.";
     public object InputSchema => new
     {

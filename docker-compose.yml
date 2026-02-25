@@ -1,0 +1,16 @@
+services:
+
+  devmemory-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${DEVMEMORY_PORT:-9120}:9120"
+    environment:
+      DEVMEMORY_TRANSPORT: http
+      DEVMEMORY_PORT: "9120"
+      DEVMEMORY_STORAGE: PostgreSQL
+      DEVMEMORY_POSTGRES_CONNECTION: >-
+        Host=db;Port=5432;Database=devmemory;
+        Username=devmemory;Password=${POSTGRES_PASSWORD:-devmemory}
+    restart: unless-stopped

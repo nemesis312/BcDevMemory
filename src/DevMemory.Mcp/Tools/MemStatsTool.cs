@@ -12,6 +12,7 @@ public sealed class MemStatsTool : IMcpTool
     public MemStatsTool(IMemoryRepository memory) => _memory = memory;
 
     public string Name        => "mem_stats";
+    public bool   IsReadOnly  => true;
     public string Description => "Show memory usage statistics — total observations, sessions, and projects tracked.";
     public object InputSchema => new
     {

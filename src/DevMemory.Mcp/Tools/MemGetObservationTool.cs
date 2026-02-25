@@ -12,6 +12,7 @@ public sealed class MemGetObservationTool : IMcpTool
     public MemGetObservationTool(IMemoryRepository memory) => _memory = memory;
 
     public string Name        => "mem_get_observation";
+    public bool   IsReadOnly  => true;
     public string Description => "Get the full content of a specific observation by ID.";
     public object InputSchema => new
     {

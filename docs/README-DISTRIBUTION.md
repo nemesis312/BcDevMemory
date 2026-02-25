@@ -48,6 +48,97 @@ DevMemory supports three storage backends. The default is **SQLite** (zero setup
 
 ---
 
+## Centralized Deployment (Container)
+
+Instead of installing a binary on every machine, you can run DevMemory as a shared HTTP service. All team members point their AI agents to the same URL — no local installation required.
+
+### Requirements
+
+- Docker + Docker Compose
+- A machine or server reachable by all team members (can be local network)
+
+### Start the stack
+
+```bash
+# Clone or copy the repo, then:
+docker compose up -d
+```
+
+This starts two containers:
+- **devmemory-mcp** — MCP server in HTTP/SSE mode on port 8080
+- **db** — PostgreSQL 17 for shared, persistent storage
+
+Set a strong password before deploying:
+```bash
+POSTGRES_PASSWORD=your-strong-password docker compose up -d
+```
+
+### Configure each machine (no binary needed)
+
+#### Claude Code
+
+```json
+{
+  "mcpServers": {
+    "devmemory": {
+      "type": "sse",
+      "url": "http://your-server:8080/sse"
+    }
+  }
+}
+```
+
+#### VS Code (GitHub Copilot / Claude extension)
+
+```json
+{
+  "servers": {
+    "devmemory": {
+      "type": "sse",
+      "url": "http://your-server:8080/sse"
+    }
+  }
+}
+```
+
+#### Cursor
+
+```json
+{
+  "mcpServers": {
+    "devmemory": {
+      "type": "sse",
+      "url": "http://your-server:8080/sse"
+    }
+  }
+}
+```
+
+### Verify the container is running
+
+```bash
+curl http://your-server:8080/health
+# {"status":"ok","version":"1.0.1"}
+```
+
+### Environment variables (docker-compose override)
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `POSTGRES_PASSWORD` | `devmemory` | PostgreSQL password — **change in production** |
+| `DEVMEMORY_PORT` | `8080` | Port exposed to the host |
+
+To use Neo4j instead of PostgreSQL, replace the `db` service with a Neo4j container and set:
+```yaml
+environment:
+  DEVMEMORY_STORAGE: Neo4j
+  DEVMEMORY_NEO4J_URI: bolt://db:7687
+  DEVMEMORY_NEO4J_USER: neo4j
+  DEVMEMORY_NEO4J_PASSWORD: your-password
+```
+
+---
+
 ## MCP Configuration
 
 ### Claude Code
@@ -347,28 +438,30 @@ devmemory-mcp
 
 ### Core Tools (all backends)
 
-| Tool | Description |
-|------|-------------|
-| `mem_save` | Save a structured observation (decision, bugfix, pattern, etc.) |
-| `mem_search` | Full-text search across all memories |
-| `mem_context` | Load recent session history for a project |
-| `mem_get_observation` | Retrieve the full content of an observation by ID |
-| `mem_timeline` | Get chronological context around an observation |
-| `mem_session_start` | Start a new coding session |
-| `mem_session_end` | End the current session with a summary |
-| `mem_session_summary` | Update the current session summary |
-| `mem_stats` | Memory statistics (total observations, sessions, projects) |
-| `mem_save_prompt` | Save a user prompt to the current session |
+Tools marked ✅ in **Plan mode** are available when the AI agent is in read-only/planning mode (e.g. Claude Code plan mode).
+
+| Tool | Description | Plan mode |
+|------|-------------|:---------:|
+| `mem_search` | Full-text search across all memories | ✅ |
+| `mem_context` | Load recent session history for a project | ✅ |
+| `mem_get_observation` | Retrieve the full content of an observation by ID | ✅ |
+| `mem_timeline` | Get chronological context around an observation | ✅ |
+| `mem_stats` | Memory statistics (total observations, sessions, projects) | ✅ |
+| `mem_save` | Save a structured observation (decision, bugfix, pattern, etc.) | — |
+| `mem_session_start` | Start a new coding session | — |
+| `mem_session_end` | End the current session with a summary | — |
+| `mem_session_summary` | Update the current session summary | — |
+| `mem_save_prompt` | Save a user prompt to the current session | — |
 
 ### Graph Tools (Neo4j only)
 
 These tools are only registered when `DEVMEMORY_STORAGE=Neo4j`.
 
-| Tool | Description |
-|------|-------------|
-| `mem_link` | Create a typed relationship between two observations |
-| `mem_related` | Find observations transitively related to a given one |
-| `mem_decision_chain` | Trace all observations that led to a decision |
+| Tool | Description | Plan mode |
+|------|-------------|:---------:|
+| `mem_related` | Find observations transitively related to a given one | ✅ |
+| `mem_decision_chain` | Trace all observations that led to a decision | ✅ |
+| `mem_link` | Create a typed relationship between two observations | — |
 
 #### `mem_link` example
 
@@ -473,7 +566,7 @@ echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}' | devmemory-mc
 
 Expected response:
 ```json
-{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"devmemory","version":"1.0.0"}}}
+{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"devmemory","version":"1.0.1"}}}
 ```
 
 ### List available tools
@@ -494,6 +587,17 @@ echo '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}' | devmemory-mc
 1. Check PostgreSQL is running: `pg_isready -h localhost`
 2. Verify the connection string has the correct host, port, and credentials
 3. Ensure the `devmemory` database exists and the user has access
+
+### SSE: agent cannot connect to container
+
+1. Verify the container is running: `docker compose ps`
+2. Check the health endpoint: `curl http://your-server:8080/health`
+3. Confirm the port is reachable from the client machine: `nc -zv your-server 8080`
+4. Ensure no firewall is blocking port 8080
+
+### SSE: tools not appearing in plan mode
+
+Tools must declare `readOnlyHint: true` in their annotations to be available in plan mode. Read tools (`mem_search`, `mem_context`, `mem_get_observation`, `mem_stats`, `mem_timeline`, `mem_related`, `mem_decision_chain`) are available. Write tools are intentionally excluded.
 
 ---
 

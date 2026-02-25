@@ -5,26 +5,27 @@ namespace DevMemory.Mcp.Server;
 
 /// <summary>
 /// Composes all MCP tools, wires them to the JSON-RPC handler,
-/// and runs the stdio transport loop.
+/// and delegates execution to the selected transport.
 ///
-/// Usage (CLI McpCommand):
+/// Stdio (default — local mode):
 ///   var server = new McpServer(memory, sessions, search);
-///   await server.RunAsync(cancellationToken);
 ///
-/// With Neo4j graph tools:
-///   var server = new McpServer(memory, sessions, search, graphRepository);
-///   await server.RunAsync(cancellationToken);
+/// SSE (HTTP mode — containerized/centralized):
+///   var server = new McpServer(memory, sessions, search, transport: new SseTransport(8080));
+///
+/// With Neo4j graph tools, pass the graph repository as the fourth argument.
 /// </summary>
 public sealed class McpServer
 {
-    private readonly JsonRpcHandler  _handler;
-    private readonly StdioTransport  _transport;
+    private readonly JsonRpcHandler _handler;
+    private readonly ITransport     _transport;
 
     public McpServer(
         IMemoryRepository  memory,
         ISessionRepository sessions,
         ISearchService     search,
-        IGraphRepository?  graph = null)
+        IGraphRepository?  graph     = null,
+        ITransport?        transport = null)
     {
         var tools = new List<IMcpTool>
         {
@@ -49,7 +50,7 @@ public sealed class McpServer
         }
 
         _handler   = new JsonRpcHandler(tools);
-        _transport = new StdioTransport();
+        _transport = transport ?? new StdioTransport();
     }
 
     public Task RunAsync(CancellationToken cancellationToken = default) =>
