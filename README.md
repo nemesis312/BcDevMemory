@@ -84,18 +84,18 @@ Download the binary, add 5 lines of JSON to your MCP config, done. SQLite requir
 
 ## Features
 
-| Feature                  | Details                                                             |
-| ------------------------ | ------------------------------------------------------------------- |
-| **MCP-native**           | Implements the Model Context Protocol via stdio transport           |
-| **3 storage backends**   | SQLite (local), PostgreSQL (teams), Neo4j (graph)                   |
-| **Session management**   | Start/end sessions, persist summaries, survive context compaction   |
-| **Full-text search**     | Search across all memories with `mem_search`                        |
-| **13 observation types** | `bugfix`, `architecture-decision`, `pattern`, `discovery`, and more |
-| **Graph relationships**  | Link observations, trace decision chains (Neo4j)                    |
-| **Privacy protection**   | `<private>` tag stripping at the repository layer                   |
-| **Cross-platform**       | Native binaries for Windows x64, macOS ARM64/x64, Linux x64/ARM64   |
-| **No runtime required**  | Single self-contained executable                                    |
-| **CLI included**         | Export, import, search, stats — all from the terminal               |
+| Feature                  | Details                                                              |
+| ------------------------ | -------------------------------------------------------------------- |
+| **MCP-native**           | Implements MCP via **stdio** (default) and **HTTP + SSE** transports |
+| **3 storage backends**   | SQLite (local), PostgreSQL (teams), Neo4j (graph)                    |
+| **Session management**   | Start/end sessions, persist summaries, survive context compaction    |
+| **Full-text search**     | Search across all memories with `mem_search`                         |
+| **13 observation types** | `bugfix`, `architecture-decision`, `pattern`, `discovery`, and more  |
+| **Graph relationships**  | Link observations, trace decision chains (Neo4j)                     |
+| **Privacy protection**   | `<private>` tag stripping at the repository layer                    |
+| **Cross-platform**       | Native binaries for Windows x64, macOS ARM64/x64, Linux x64/ARM64    |
+| **No runtime required**  | Single self-contained executable                                     |
+| **CLI included**         | Export, import, search, stats — all from the terminal                |
 
 ---
 
@@ -313,17 +313,94 @@ Returns every observation that contributed to a final decision — a full audit 
 
 ---
 
+## HTTP + SSE Transport
+
+By default DevMemory communicates over **stdio**, which is what most desktop agent configs (Claude Code, Cursor, VS Code) expect. If you need to expose the server over the network — for example to run it as a shared daemon, inside Docker, or to support clients that use the newer Streamable HTTP spec — set `DEVMEMORY_TRANSPORT=http`.
+
+### Protocol flows
+
+**Legacy SSE** (MCP spec 2024-11-05, supported by most clients):
+
+1. Client opens `GET /sse` → server sends an `endpoint` event with a session-specific POST URL
+2. Client sends JSON-RPC requests to `POST /message?sessionId=<id>` → server responds `202`
+3. Server pushes each JSON-RPC response back through the open SSE stream
+
+**Streamable HTTP** (newer clients):
+
+1. Client sends `POST /sse` with a JSON-RPC request → server streams the response back directly
+
+A heartbeat ping is sent every 30 seconds to keep connections alive through proxies and load balancers.
+
+### Starting in HTTP mode
+
+```bash
+# Stdio (default — same as omitting the variable)
+DEVMEMORY_TRANSPORT=stdio ./devmemory-mcp
+
+# HTTP + SSE on the default port 8080
+DEVMEMORY_TRANSPORT=http ./devmemory-mcp
+
+# HTTP + SSE on a custom port
+DEVMEMORY_TRANSPORT=http DEVMEMORY_PORT=3100 ./devmemory-mcp
+```
+
+### Configuring agents for HTTP + SSE
+
+**Claude Code (`~/.claude/mcp.json`):**
+
+```json
+{
+  "mcpServers": {
+    "devmemory": {
+      "type": "sse",
+      "url": "http://localhost:8080/sse"
+    }
+  }
+}
+```
+
+**VS Code (`mcp.json`):**
+
+```json
+{
+  "servers": {
+    "devmemory": {
+      "type": "sse",
+      "url": "http://localhost:8080/sse"
+    }
+  }
+}
+```
+
+**Docker example** (also set your storage env vars as needed):
+
+```bash
+docker run -d \
+  --name devmemory \
+  -p 8080:8080 \
+  -e DEVMEMORY_TRANSPORT=http \
+  -e DEVMEMORY_STORAGE=SQLite \
+  -v $HOME/.devmemory:/root/.devmemory \
+  devmemory-mcp
+```
+
+> When running in HTTP mode the process does **not** read from stdin — it binds to `0.0.0.0:<port>` and serves requests over HTTP. Keep the process running; agents connect and disconnect as needed.
+
+---
+
 ## Environment Variables Reference
 
-| Variable                        | Default                     | Description                                 |
-| ------------------------------- | --------------------------- | ------------------------------------------- |
-| `DEVMEMORY_STORAGE`             | `SQLite`                    | Backend: `SQLite`, `PostgreSQL`, or `Neo4j` |
-| `DEVMEMORY_SQLITE_PATH`         | `~/.devmemory/devmemory.db` | SQLite file path                            |
-| `DEVMEMORY_POSTGRES_CONNECTION` | _(none)_                    | Full PostgreSQL connection string           |
-| `DEVMEMORY_NEO4J_URI`           | `bolt://localhost:7687`     | Neo4j Bolt URI                              |
-| `DEVMEMORY_NEO4J_USER`          | `neo4j`                     | Neo4j username                              |
-| `DEVMEMORY_NEO4J_PASSWORD`      | _(none)_                    | Neo4j password                              |
-| `DEVMEMORY_NEO4J_DATABASE`      | `neo4j`                     | Neo4j database name                         |
+| Variable                        | Default                     | Description                                           |
+| ------------------------------- | --------------------------- | ----------------------------------------------------- |
+| `DEVMEMORY_STORAGE`             | `SQLite`                    | Backend: `SQLite`, `PostgreSQL`, or `Neo4j`           |
+| `DEVMEMORY_SQLITE_PATH`         | `~/.devmemory/devmemory.db` | SQLite file path                                      |
+| `DEVMEMORY_POSTGRES_CONNECTION` | _(none)_                    | Full PostgreSQL connection string                     |
+| `DEVMEMORY_NEO4J_URI`           | `bolt://localhost:7687`     | Neo4j Bolt URI                                        |
+| `DEVMEMORY_NEO4J_USER`          | `neo4j`                     | Neo4j username                                        |
+| `DEVMEMORY_NEO4J_PASSWORD`      | _(none)_                    | Neo4j password                                        |
+| `DEVMEMORY_NEO4J_DATABASE`      | `neo4j`                     | Neo4j database name                                   |
+| `DEVMEMORY_TRANSPORT`           | `stdio`                     | Transport mode: `stdio` or `http` (HTTP + SSE)        |
+| `DEVMEMORY_PORT`                | `8080`                      | HTTP port (only used when `DEVMEMORY_TRANSPORT=http`) |
 
 ---
 
@@ -409,7 +486,7 @@ chmod +x ~/.local/bin/devmemory-mcp
 xattr -d com.apple.quarantine ~/.local/bin/devmemory-mcp
 ```
 
-### Test the MCP connection manually
+### Test the MCP connection manually (stdio mode)
 
 ```bash
 echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}' | ~/.local/bin/devmemory-mcp
@@ -427,6 +504,22 @@ Expected response:
     "serverInfo": { "name": "devmemory", "version": "1.0.0" }
   }
 }
+```
+
+### Test the MCP connection manually (HTTP + SSE mode)
+
+Start the server with `DEVMEMORY_TRANSPORT=http`, then in a separate terminal:
+
+```bash
+# 1. Open SSE stream (keep this running in a terminal tab):
+curl -N http://localhost:8080/sse
+# Server responds: event: endpoint\ndata: /message?sessionId=<id>
+
+# 2. Send an initialize request using the sessionId from step 1:
+curl -X POST "http://localhost:8080/message?sessionId=<id>" \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}'
+# Response arrives on the SSE stream in step 1
 ```
 
 ### List available tools
