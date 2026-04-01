@@ -5,6 +5,7 @@ using DevMemory.Infrastructure.Export;
 using DevMemory.Infrastructure.Neo4j;
 using DevMemory.Infrastructure.Neo4j.Extensions;
 using DevMemory.Infrastructure.Search;
+using DevMemory.Infrastructure.Sync;
 
 // ── Configuration ─────────────────────────────────────────────────────────────
 
@@ -64,6 +65,13 @@ else
 }
 
 builder.Services.AddSingleton<ExportService>();
+builder.Services.AddSingleton(new SyncRuntimeOptions
+{
+    StorageProvider = provider,
+    ConfiguredSyncPath = Environment.GetEnvironmentVariable("DEVMEMORY_SYNC_PATH")
+        ?? builder.Configuration["DevMemory:Sync:Path"],
+});
+builder.Services.AddSingleton<ISyncService, SyncService>();
 builder.Services.AddEndpointsApiExplorer();
 
 var port = builder.Configuration.GetValue<int>("DevMemory:Server:Port", 7437);
@@ -77,6 +85,7 @@ app.MapMemoryEndpoints();
 app.MapSearchEndpoints();
 app.MapSessionEndpoints();
 app.MapExportEndpoints();
+app.MapSyncEndpoints();
 
 app.MapGet("/", () => Results.Ok(new
 {

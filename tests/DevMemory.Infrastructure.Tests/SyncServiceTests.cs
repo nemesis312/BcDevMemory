@@ -73,4 +73,114 @@ public sealed class SyncServiceTests
                 Directory.Delete(root, recursive: true);
         }
     }
+
+    [Fact]
+    public async Task Import_Skips_Invalid_Chunk_When_Not_Strict()
+    {
+        var root = Path.Combine(Path.GetTempPath(), $"devmemory-sync-invalid-{Guid.NewGuid():N}");
+        var syncPath = Path.Combine(root, "sync");
+        var dbPath = Path.Combine(root, "target.db");
+        Directory.CreateDirectory(Path.Combine(syncPath, "chunks"));
+
+        try
+        {
+            await File.WriteAllTextAsync(Path.Combine(syncPath, "manifest.json"),
+                """
+                {
+                  "version": 1,
+                  "updated_at": "2026-01-01T00:00:00Z",
+                  "chunks": [
+                    {
+                      "id": "badchunk0001",
+                      "project": null,
+                      "created_at": "2026-01-01T00:00:00Z",
+                      "max_observation_created_at": "2026-01-01T00:00:00Z",
+                      "item_count": 1
+                    }
+                  ]
+                }
+                """);
+            await File.WriteAllTextAsync(Path.Combine(syncPath, "chunks", "badchunk0001.json.gz"), "not-gzip");
+
+            var ctx = new SqliteContext(dbPath);
+            await ctx.EnsureSchemaAsync();
+
+            var sync = new SyncService(new SyncRuntimeOptions
+            {
+                StorageProvider = "SQLite",
+                ConfiguredSyncPath = syncPath,
+            }, ctx);
+
+            var result = await sync.ImportAsync(new SyncOptions
+            {
+                AllProjects = true,
+                SyncPath = syncPath,
+                Strict = false,
+            });
+
+            Assert.True(result.Success);
+            Assert.Equal(0, result.ProcessedChunks);
+            Assert.Equal(1, result.InvalidChunks);
+            Assert.Single(result.Warnings);
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+                Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task Import_Fails_Invalid_Chunk_When_Strict()
+    {
+        var root = Path.Combine(Path.GetTempPath(), $"devmemory-sync-strict-{Guid.NewGuid():N}");
+        var syncPath = Path.Combine(root, "sync");
+        var dbPath = Path.Combine(root, "target.db");
+        Directory.CreateDirectory(Path.Combine(syncPath, "chunks"));
+
+        try
+        {
+            await File.WriteAllTextAsync(Path.Combine(syncPath, "manifest.json"),
+                """
+                {
+                  "version": 1,
+                  "updated_at": "2026-01-01T00:00:00Z",
+                  "chunks": [
+                    {
+                      "id": "badchunk0002",
+                      "project": null,
+                      "created_at": "2026-01-01T00:00:00Z",
+                      "max_observation_created_at": "2026-01-01T00:00:00Z",
+                      "item_count": 1
+                    }
+                  ]
+                }
+                """);
+            await File.WriteAllTextAsync(Path.Combine(syncPath, "chunks", "badchunk0002.json.gz"), "not-gzip");
+
+            var ctx = new SqliteContext(dbPath);
+            await ctx.EnsureSchemaAsync();
+
+            var sync = new SyncService(new SyncRuntimeOptions
+            {
+                StorageProvider = "SQLite",
+                ConfiguredSyncPath = syncPath,
+            }, ctx);
+
+            var result = await sync.ImportAsync(new SyncOptions
+            {
+                AllProjects = true,
+                SyncPath = syncPath,
+                Strict = true,
+            });
+
+            Assert.False(result.Success);
+            Assert.Contains("Failed to import chunk", result.Message);
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+                Directory.Delete(root, recursive: true);
+        }
+    }
 }

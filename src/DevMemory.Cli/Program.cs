@@ -111,6 +111,7 @@ app.Configure(config =>
 
     config.AddCommand<SyncCommand>("sync")
         .WithDescription("Export/import file-based sync chunks for SQLite")
+        .WithExample("sync", "--init", "--sync-path", "~/devmemory-sync")
         .WithExample("sync")
         .WithExample("sync", "--import")
         .WithExample("sync", "--status", "--sync-path", "~/devmemory-sync");

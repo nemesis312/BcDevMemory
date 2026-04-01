@@ -2,7 +2,7 @@ using System.Diagnostics;
 
 namespace DevMemory.Infrastructure.Sync;
 
-internal sealed class GitSyncInspector
+public sealed class GitSyncInspector
 {
     public async Task<GitSyncInfo> InspectAsync(string path, CancellationToken cancellationToken = default)
     {
@@ -12,6 +12,19 @@ internal sealed class GitSyncInspector
 
         var statusOutput = await RunGitAsync(path, "status --porcelain=2 --branch", cancellationToken);
         return ParsePorcelainV2(statusOutput);
+    }
+
+    public async Task<bool> InitializeRepositoryAsync(string path, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await RunGitAsync(path, "init", cancellationToken);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     private static async Task<bool> IsGitRepositoryAsync(string path, CancellationToken cancellationToken)
@@ -55,7 +68,7 @@ internal sealed class GitSyncInspector
         return stdout;
     }
 
-    internal static GitSyncInfo ParsePorcelainV2(string output)
+    public static GitSyncInfo ParsePorcelainV2(string output)
     {
         var info = new GitSyncInfo { IsRepository = true };
         var lines = output.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
@@ -89,7 +102,7 @@ internal sealed class GitSyncInspector
     }
 }
 
-internal sealed class GitSyncInfo
+public sealed class GitSyncInfo
 {
     public bool IsRepository { get; set; }
     public string? Branch { get; set; }

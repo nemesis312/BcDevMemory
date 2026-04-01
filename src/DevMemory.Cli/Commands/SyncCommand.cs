@@ -14,6 +14,10 @@ internal sealed class SyncCommand : AsyncCommand<SyncCommand.Settings>
 
     public sealed class Settings : CommandSettings
     {
+        [CommandOption("--init")]
+        [Description("Initialize sync repository structure and optional git repo")]
+        public bool Init { get; set; }
+
         [CommandOption("--status")]
         [Description("Show sync repository readiness and configuration status")]
         public bool Status { get; set; }
@@ -21,6 +25,10 @@ internal sealed class SyncCommand : AsyncCommand<SyncCommand.Settings>
         [CommandOption("--import")]
         [Description("Import chunks from sync repository into local SQLite")]
         public bool Import { get; set; }
+
+        [CommandOption("--strict")]
+        [Description("Fail import on first invalid/corrupt chunk")]
+        public bool Strict { get; set; }
 
         [CommandOption("-p|--project <project>")]
         [Description("Optional project scope for future sync phases")]
@@ -37,9 +45,10 @@ internal sealed class SyncCommand : AsyncCommand<SyncCommand.Settings>
 
     public override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
-        if (settings.Status && settings.Import)
+        var modeCount = (settings.Init ? 1 : 0) + (settings.Status ? 1 : 0) + (settings.Import ? 1 : 0);
+        if (modeCount > 1)
         {
-            AnsiConsole.MarkupLine("[red]Error:[/] use either [bold]--status[/] or [bold]--import[/], not both.");
+            AnsiConsole.MarkupLine("[red]Error:[/] choose one mode: [bold]--init[/], [bold]--status[/], or [bold]--import[/].");
             return 1;
         }
 
@@ -48,7 +57,11 @@ internal sealed class SyncCommand : AsyncCommand<SyncCommand.Settings>
             Project = settings.Project,
             AllProjects = settings.All,
             SyncPath = settings.SyncPath,
+            Strict = settings.Strict,
         };
+
+        if (settings.Init)
+            return await InitAsync(options, cancellationToken);
 
         if (settings.Status)
             return await ShowStatusAsync(options, cancellationToken);
@@ -57,6 +70,22 @@ internal sealed class SyncCommand : AsyncCommand<SyncCommand.Settings>
             return await ImportAsync(options, cancellationToken);
 
         return await ExportAsync(options, cancellationToken);
+    }
+
+    private async Task<int> InitAsync(SyncOptions options, CancellationToken cancellationToken)
+    {
+        var result = await _sync.InitializeAsync(options, cancellationToken);
+        if (!result.Success)
+        {
+            AnsiConsole.MarkupLine($"[red]Error:[/] {Markup.Escape(result.Message)}");
+            return 2;
+        }
+
+        AnsiConsole.MarkupLine($"[green]✓[/] {Markup.Escape(result.Message)}");
+        AnsiConsole.MarkupLine($"Path: [cyan]{Markup.Escape(result.SyncPath)}[/]");
+        AnsiConsole.MarkupLine($"Manifest created: {(result.ManifestCreated ? "[green]yes[/]" : "[yellow]no[/]")}");
+        AnsiConsole.MarkupLine($"Git initialized: {(result.GitInitialized ? "[green]yes[/]" : "[yellow]no[/]")}");
+        return 0;
     }
 
     private async Task<int> ShowStatusAsync(SyncOptions options, CancellationToken cancellationToken)
@@ -130,6 +159,14 @@ internal sealed class SyncCommand : AsyncCommand<SyncCommand.Settings>
 
         AnsiConsole.MarkupLine($"[green]✓[/] {Markup.Escape(result.Message)}");
         AnsiConsole.MarkupLine($"Imported - Sessions: [cyan]{result.ImportedSessions}[/], Observations: [cyan]{result.ImportedObservations}[/], Prompts: [cyan]{result.ImportedPrompts}[/]");
+
+        if (result.Warnings.Count > 0)
+        {
+            AnsiConsole.MarkupLine("[yellow]Warnings:[/]");
+            foreach (var warning in result.Warnings)
+                AnsiConsole.MarkupLine($"- {Markup.Escape(warning)}");
+        }
+
         return 0;
     }
 }

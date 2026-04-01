@@ -481,8 +481,14 @@ devmemory-mcp sync --sync-path ~/devmemory-sync
 # Import new chunks from sync repository
 devmemory-mcp sync --import --sync-path ~/devmemory-sync
 
+# Strict import (fail on first invalid chunk)
+devmemory-mcp sync --import --strict --sync-path ~/devmemory-sync
+
 # Show sync repository status
 devmemory-mcp sync --status --sync-path ~/devmemory-sync
+
+# Initialize sync path (dirs + manifest + git init when needed)
+devmemory-mcp sync --init --sync-path ~/devmemory-sync
 ```
 
 Recommended Git workflow for shared sync repo:

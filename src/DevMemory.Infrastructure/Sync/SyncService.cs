@@ -1,5 +1,4 @@
 using System.Security.Cryptography;
-using System.Text;
 using System.Text.Json;
 using Dapper;
 using DevMemory.Core.Interfaces;
@@ -25,6 +24,43 @@ public sealed class SyncService : ISyncService
         _runtimeOptions = runtimeOptions;
         _sqlite = sqlite;
         _git = new GitSyncInspector();
+    }
+
+    public async Task<SyncInitResult> InitializeAsync(SyncOptions options, CancellationToken cancellationToken = default)
+    {
+        var pathResolution = ResolvePath(options.SyncPath);
+        Directory.CreateDirectory(pathResolution.Path);
+        Directory.CreateDirectory(Path.Combine(pathResolution.Path, "chunks"));
+        Directory.CreateDirectory(Path.Combine(pathResolution.Path, "projects"));
+
+        var transport = new FileSyncTransport(pathResolution.Path);
+        var manifestPath = Path.Combine(pathResolution.Path, "manifest.json");
+        var manifestCreated = false;
+
+        if (!File.Exists(manifestPath))
+        {
+            await transport.WriteManifestAsync(new SyncManifest
+            {
+                Version = 1,
+                UpdatedAt = DateTime.UtcNow,
+                Chunks = [],
+            }, cancellationToken);
+            manifestCreated = true;
+        }
+
+        var gitInfo = await _git.InspectAsync(pathResolution.Path, cancellationToken);
+        var gitInitialized = false;
+        if (!gitInfo.IsRepository)
+            gitInitialized = await _git.InitializeRepositoryAsync(pathResolution.Path, cancellationToken);
+
+        return new SyncInitResult
+        {
+            Success = true,
+            Message = "Sync repository initialized.",
+            SyncPath = pathResolution.Path,
+            ManifestCreated = manifestCreated,
+            GitInitialized = gitInitialized,
+        };
     }
 
     public async Task<SyncStatus> GetStatusAsync(SyncOptions options, CancellationToken cancellationToken = default)
@@ -242,9 +278,28 @@ public sealed class SyncService : ISyncService
                 continue;
             }
 
-            var bytes = await transport.ReadChunkAsync(entry.Id, cancellationToken);
-            var chunk = JsonSerializer.Deserialize<SyncChunkDocument>(bytes, JsonOpts)
-                ?? throw new InvalidOperationException($"Chunk {entry.Id} has invalid payload.");
+            SyncChunkDocument chunk;
+            try
+            {
+                var bytes = await transport.ReadChunkAsync(entry.Id, cancellationToken);
+                chunk = JsonSerializer.Deserialize<SyncChunkDocument>(bytes, JsonOpts)
+                    ?? throw new InvalidOperationException($"Chunk {entry.Id} has invalid payload.");
+            }
+            catch (Exception ex)
+            {
+                if (options.Strict)
+                {
+                    return new SyncImportResult
+                    {
+                        Success = false,
+                        Message = $"Failed to import chunk {entry.Id}: {ex.Message}",
+                    };
+                }
+
+                result.InvalidChunks++;
+                result.Warnings.Add($"Skipped invalid chunk {entry.Id}: {ex.Message}");
+                continue;
+            }
 
             await using var tx = await connection.BeginTransactionAsync(cancellationToken);
 
@@ -324,7 +379,7 @@ public sealed class SyncService : ISyncService
             result.ProcessedChunks++;
         }
 
-        result.Message = $"Processed {result.ProcessedChunks} chunk(s), skipped {result.SkippedChunks}.";
+        result.Message = $"Processed {result.ProcessedChunks} chunk(s), skipped {result.SkippedChunks}, invalid {result.InvalidChunks}.";
         return result;
     }
 
