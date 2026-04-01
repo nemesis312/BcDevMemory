@@ -6,6 +6,7 @@ using DevMemory.Infrastructure.Export;
 using DevMemory.Infrastructure.Neo4j;
 using DevMemory.Infrastructure.Neo4j.Extensions;
 using DevMemory.Infrastructure.Search;
+using DevMemory.Infrastructure.Sync;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Spectre.Console;
@@ -25,6 +26,7 @@ var provider = configuration["STORAGE"]
 // ── Services ──────────────────────────────────────────────────────────────────
 
 var services = new ServiceCollection();
+services.AddSingleton(configuration);
 
 if (provider.Equals("SQLite", StringComparison.OrdinalIgnoreCase))
 {
@@ -68,6 +70,12 @@ else
 }
 
 services.AddSingleton<ExportService>();
+services.AddSingleton(new SyncRuntimeOptions
+{
+    StorageProvider = provider,
+    ConfiguredSyncPath = configuration["DevMemory:Sync:Path"],
+});
+services.AddSingleton<ISyncService, SyncService>();
 
 // ── CLI App ───────────────────────────────────────────────────────────────────
 
@@ -100,6 +108,12 @@ app.Configure(config =>
     config.AddCommand<ImportCommand>("import")
         .WithDescription("Import observations from a JSON export file")
         .WithExample("import", "memory.json");
+
+    config.AddCommand<SyncCommand>("sync")
+        .WithDescription("Export/import file-based sync chunks for SQLite")
+        .WithExample("sync")
+        .WithExample("sync", "--import")
+        .WithExample("sync", "--status", "--sync-path", "~/devmemory-sync");
 
     config.AddCommand<McpCommand>("mcp")
         .WithDescription("Start the MCP server (stdio transport for AI agent integration)");

@@ -399,6 +399,7 @@ docker run -d \
 | `DEVMEMORY_NEO4J_USER`          | `neo4j`                     | Neo4j username                                        |
 | `DEVMEMORY_NEO4J_PASSWORD`      | _(none)_                    | Neo4j password                                        |
 | `DEVMEMORY_NEO4J_DATABASE`      | `neo4j`                     | Neo4j database name                                   |
+| `DEVMEMORY_SYNC_PATH`           | `~/.devmemory-sync`         | Global Git-backed memory sync repository path         |
 | `DEVMEMORY_TRANSPORT`           | `stdio`                     | Transport mode: `stdio` or `http` (HTTP + SSE)        |
 | `DEVMEMORY_PORT`                | `8080`                      | HTTP port (only used when `DEVMEMORY_TRANSPORT=http`) |
 
@@ -473,6 +474,15 @@ devmemory-mcp export --format json --output memories.json
 
 # Import from a JSON export
 devmemory-mcp import --file memories.json
+
+# Export latest SQLite memory to sync chunks
+devmemory-mcp sync --sync-path ~/devmemory-sync
+
+# Import new chunks from sync repository
+devmemory-mcp sync --import --sync-path ~/devmemory-sync
+
+# Show sync repository status
+devmemory-mcp sync --status --sync-path ~/devmemory-sync
 ```
 
 ---

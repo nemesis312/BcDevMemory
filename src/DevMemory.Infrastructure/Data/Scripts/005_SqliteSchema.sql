@@ -42,6 +42,12 @@ CREATE TABLE IF NOT EXISTS prompts (
 
 CREATE INDEX IF NOT EXISTS idx_prompts_session ON prompts(session_id);
 
+CREATE TABLE IF NOT EXISTS sync_chunks (
+    chunk_id    TEXT PRIMARY KEY,
+    imported_at TEXT NOT NULL,
+    item_count  INTEGER NOT NULL DEFAULT 0
+);
+
 -- FTS5 virtual table for full-text search
 CREATE VIRTUAL TABLE IF NOT EXISTS observations_fts USING fts5(
     observation_id UNINDEXED,
