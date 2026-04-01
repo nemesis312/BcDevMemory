@@ -72,6 +72,14 @@ internal sealed class SyncCommand : AsyncCommand<SyncCommand.Settings>
         AnsiConsole.MarkupLine($"Path exists: {(status.SyncPathExists ? "[green]yes[/]" : "[red]no[/]")}");
         AnsiConsole.MarkupLine($"Path writable: {(status.SyncPathWritable ? "[green]yes[/]" : "[yellow]no[/]")}");
         AnsiConsole.MarkupLine($"Manifest exists: {(status.ManifestExists ? "[green]yes[/]" : "[yellow]no[/]")}");
+        AnsiConsole.MarkupLine($"Git repo: {(status.GitRepositoryDetected ? "[green]yes[/]" : "[yellow]no[/]")}");
+
+        if (status.GitRepositoryDetected)
+        {
+            AnsiConsole.MarkupLine($"Git branch: [cyan]{Markup.Escape(status.GitBranch ?? "(detached)")}[/]");
+            AnsiConsole.MarkupLine($"Git dirty: {(status.GitHasUncommittedChanges ? "[yellow]yes[/]" : "[green]no[/]")}");
+            AnsiConsole.MarkupLine($"Git ahead/behind: [cyan]+{status.GitAheadCount}[/]/[cyan]-{status.GitBehindCount}[/]");
+        }
 
         if (status.ManifestVersion.HasValue)
             AnsiConsole.MarkupLine($"Manifest version: [cyan]{status.ManifestVersion.Value}[/]");

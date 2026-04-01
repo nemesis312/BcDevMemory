@@ -13,5 +13,10 @@ public sealed class SyncStatus
     public bool ManifestExists { get; set; }
     public int? ManifestVersion { get; set; }
     public int ChunkCount { get; set; }
+    public bool GitRepositoryDetected { get; set; }
+    public string? GitBranch { get; set; }
+    public bool GitHasUncommittedChanges { get; set; }
+    public int GitAheadCount { get; set; }
+    public int GitBehindCount { get; set; }
     public List<string> Messages { get; set; } = [];
 }

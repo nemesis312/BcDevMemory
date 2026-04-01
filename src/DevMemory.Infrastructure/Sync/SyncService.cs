@@ -13,6 +13,7 @@ public sealed class SyncService : ISyncService
 {
     private readonly SyncRuntimeOptions _runtimeOptions;
     private readonly SqliteContext? _sqlite;
+    private readonly GitSyncInspector _git;
 
     private static readonly JsonSerializerOptions JsonOpts = new()
     {
@@ -23,6 +24,7 @@ public sealed class SyncService : ISyncService
     {
         _runtimeOptions = runtimeOptions;
         _sqlite = sqlite;
+        _git = new GitSyncInspector();
     }
 
     public async Task<SyncStatus> GetStatusAsync(SyncOptions options, CancellationToken cancellationToken = default)
@@ -69,6 +71,20 @@ public sealed class SyncService : ISyncService
         var manifest = await transport.ReadManifestAsync(cancellationToken);
         status.ManifestVersion = manifest.Version;
         status.ChunkCount = manifest.Chunks.Count;
+
+        var gitInfo = await _git.InspectAsync(pathResolution.Path, cancellationToken);
+        status.GitRepositoryDetected = gitInfo.IsRepository;
+        status.GitBranch = gitInfo.Branch;
+        status.GitHasUncommittedChanges = gitInfo.HasUncommittedChanges;
+        status.GitAheadCount = gitInfo.Ahead;
+        status.GitBehindCount = gitInfo.Behind;
+
+        if (!gitInfo.IsRepository)
+            status.Messages.Add("Sync path is not a Git repository yet. Initialize it to enable push/pull workflow.");
+        if (gitInfo.HasUncommittedChanges)
+            status.Messages.Add("Sync repository has uncommitted changes.");
+        if (gitInfo.Behind > 0)
+            status.Messages.Add("Sync repository is behind upstream. Run git pull before importing chunks.");
 
         if (!Directory.Exists(chunksPath))
             status.Messages.Add("Chunks directory is missing. It will be created on the first export.");
@@ -189,6 +205,17 @@ public sealed class SyncService : ISyncService
         }
 
         var pathResolution = ResolvePath(options.SyncPath);
+
+        var gitInfo = await _git.InspectAsync(pathResolution.Path, cancellationToken);
+        if (gitInfo.IsRepository && gitInfo.Behind > 0)
+        {
+            return new SyncImportResult
+            {
+                Success = false,
+                Message = "Sync repo is behind upstream. Run git pull in sync path before --import.",
+            };
+        }
+
         var transport = new FileSyncTransport(pathResolution.Path);
         var manifest = await transport.ReadManifestAsync(cancellationToken);
         var entries = FilterEntries(manifest.Chunks, options).OrderBy(x => x.CreatedAt).ToList();

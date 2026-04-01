@@ -485,6 +485,22 @@ devmemory-mcp sync --import --sync-path ~/devmemory-sync
 devmemory-mcp sync --status --sync-path ~/devmemory-sync
 ```
 
+Recommended Git workflow for shared sync repo:
+
+```bash
+# In machine A
+devmemory-mcp sync --sync-path ~/devmemory-sync
+git -C ~/devmemory-sync add .
+git -C ~/devmemory-sync commit -m "mem: sync update"
+git -C ~/devmemory-sync push
+
+# In machine B
+git -C ~/devmemory-sync pull
+devmemory-mcp sync --import --sync-path ~/devmemory-sync
+```
+
+`sync --import` validates Git status and will stop if the sync repo is behind upstream.
+
 ---
 
 ## Troubleshooting
