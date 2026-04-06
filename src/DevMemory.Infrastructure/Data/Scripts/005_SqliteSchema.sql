@@ -71,3 +71,39 @@ BEGIN
     INSERT INTO observations_fts(observation_id, title, content, project)
     VALUES (new.id, new.title, new.content, COALESCE(new.project, ''));
 END;
+
+-- bc-agentic-os: Run artifacts (PRD, design, plan, report, etc.)
+-- Artifacts are immutable; re-saving creates a new version.
+CREATE TABLE IF NOT EXISTS artifacts (
+    id           TEXT    PRIMARY KEY,
+    run_id       TEXT    NOT NULL,
+    project_name TEXT    NOT NULL,
+    type         TEXT    NOT NULL,
+    content      TEXT    NOT NULL,
+    version      INTEGER NOT NULL DEFAULT 1,
+    metadata     TEXT,   -- JSON object: { "goal": "...", "agentRole": "...", ... }
+    created_at   TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_artifacts_run_id  ON artifacts(run_id);
+CREATE INDEX IF NOT EXISTS idx_artifacts_project ON artifacts(project_name);
+CREATE INDEX IF NOT EXISTS idx_artifacts_type    ON artifacts(type);
+CREATE INDEX IF NOT EXISTS idx_artifacts_created ON artifacts(created_at DESC);
+
+-- bc-agentic-os: Run state checkpoints
+-- Upserted on each bc-agentic next / approve / handoff call.
+-- mode tracks whether the run is in safe | apply | god mode.
+CREATE TABLE IF NOT EXISTS run_states (
+    run_id               TEXT PRIMARY KEY,
+    project_name         TEXT NOT NULL,
+    goal                 TEXT NOT NULL,
+    current_phase        TEXT NOT NULL,
+    approvals            TEXT NOT NULL DEFAULT '{}',  -- JSON: { "prd": true, "design": false, ... }
+    last_handoff_summary TEXT,
+    open_risks           TEXT NOT NULL DEFAULT '[]',  -- JSON array of strings
+    mode                 TEXT NOT NULL DEFAULT 'safe',
+    updated_at           TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_run_states_project ON run_states(project_name);
+CREATE INDEX IF NOT EXISTS idx_run_states_updated ON run_states(updated_at DESC);

@@ -18,6 +18,7 @@ public sealed class DatabaseMigrator
         "002_FullTextSearch.sql",
         "003_StoredProcedures.sql",
         "004_EnhancedSearch.sql",
+        "006_ArtifactRunState.sql",
     ];
 
     public DatabaseMigrator(DapperContext context)

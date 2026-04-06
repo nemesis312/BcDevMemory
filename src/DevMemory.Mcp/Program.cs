@@ -6,12 +6,14 @@ using DevMemory.Mcp.Server;
 
 var storage = Environment.GetEnvironmentVariable("DEVMEMORY_STORAGE") ?? "SQLite";
 
-IMemoryRepository memory;
-ISessionRepository sessions;
-ISearchService search;
-IGraphRepository? graph = null;
-IAsyncDisposable? asyncDisposable = null;
-IDisposable? contextDisposable = null;
+IMemoryRepository    memory;
+ISessionRepository   sessions;
+ISearchService       search;
+IGraphRepository?    graph     = null;
+IArtifactRepository? artifacts = null;
+IRunStateRepository? runStates = null;
+IAsyncDisposable?    asyncDisposable  = null;
+IDisposable?         contextDisposable = null;
 
 if (storage.Equals("SQLite", StringComparison.OrdinalIgnoreCase))
 {
@@ -23,9 +25,11 @@ if (storage.Equals("SQLite", StringComparison.OrdinalIgnoreCase))
     var ctx = new SqliteContext(dbPath);
     await ctx.EnsureSchemaAsync();
 
-    memory = new SqliteMemoryRepository(ctx);
-    sessions = new SqliteSessionRepository(ctx);
-    search = new SqliteSearchService(ctx);
+    memory    = new SqliteMemoryRepository   (ctx);
+    sessions  = new SqliteSessionRepository  (ctx);
+    search    = new SqliteSearchService      (ctx);
+    artifacts = new SqliteArtifactRepository (ctx);
+    runStates = new SqliteRunStateRepository (ctx);
 
     await Console.Error.WriteLineAsync($"[devmemory] Using SQLite: {dbPath}");
 }
@@ -39,9 +43,14 @@ else if (storage.Equals("PostgreSQL", StringComparison.OrdinalIgnoreCase))
     var ctx = new DapperContext(connectionString);
     contextDisposable = ctx;
 
-    memory = new PostgresMemoryRepository(ctx);
-    sessions = new PostgresSessionRepository(ctx);
-    search = new PostgresSearchService(ctx);
+    var migrator = new DevMemory.Infrastructure.Data.DatabaseMigrator(ctx);
+    await migrator.MigrateAsync();
+
+    memory    = new PostgresMemoryRepository   (ctx);
+    sessions  = new PostgresSessionRepository  (ctx);
+    search    = new PostgresSearchService      (ctx);
+    artifacts = new PostgresArtifactRepository (ctx);
+    runStates = new PostgresRunStateRepository (ctx);
 
     await Console.Error.WriteLineAsync($"[devmemory] Using PostgreSQL");
 }
@@ -79,7 +88,7 @@ ITransport transport = transportMode.Equals("http", StringComparison.OrdinalIgno
     ? new SseTransport(port)
     : new StdioTransport();
 
-var server = new McpServer(memory, sessions, search, graph, transport);
+var server = new McpServer(memory, sessions, search, graph, transport, artifacts, runStates);
 
 using var cts = new CancellationTokenSource();
 Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };

@@ -14,6 +14,7 @@ namespace DevMemory.Mcp.Server;
 ///   var server = new McpServer(memory, sessions, search, transport: new SseTransport(8080));
 ///
 /// With Neo4j graph tools, pass the graph repository as the fourth argument.
+/// With bc-agentic-os artifact + run-state tools, pass the optional repositories.
 /// </summary>
 public sealed class McpServer
 {
@@ -21,11 +22,13 @@ public sealed class McpServer
     private readonly ITransport     _transport;
 
     public McpServer(
-        IMemoryRepository  memory,
-        ISessionRepository sessions,
-        ISearchService     search,
-        IGraphRepository?  graph     = null,
-        ITransport?        transport = null)
+        IMemoryRepository     memory,
+        ISessionRepository    sessions,
+        ISearchService        search,
+        IGraphRepository?     graph     = null,
+        ITransport?           transport = null,
+        IArtifactRepository?  artifacts = null,
+        IRunStateRepository?  runStates = null)
     {
         var tools = new List<IMcpTool>
         {
@@ -47,6 +50,28 @@ public sealed class McpServer
             tools.Add(new MemLinkTool         (graph));
             tools.Add(new MemRelatedTool      (graph));
             tools.Add(new MemDecisionChainTool(graph));
+        }
+
+        // bc-agentic-os artifact tools
+        if (artifacts is not null)
+        {
+            tools.Add(new ArtifactSaveTool        (artifacts));
+            tools.Add(new ArtifactGetTool         (artifacts));
+            tools.Add(new ArtifactListRunTool     (artifacts));
+            tools.Add(new ArtifactListProjectTool (artifacts));
+        }
+
+        // bc-agentic-os run state tools
+        if (runStates is not null)
+        {
+            tools.Add(new RunCheckpointSaveTool (runStates));
+            tools.Add(new RunListActiveTool     (runStates));
+        }
+
+        // run_context_get requires both repositories
+        if (artifacts is not null && runStates is not null)
+        {
+            tools.Add(new RunContextGetTool(runStates, artifacts));
         }
 
         _handler   = new JsonRpcHandler(tools);
