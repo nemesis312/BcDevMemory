@@ -1,5 +1,15 @@
 # DevMemory — Persistent Memory for AI Coding Agents
 
+> [!WARNING]
+> **Deprecated (Phase 5 migration state).**
+> This legacy `.NET` implementation is now in controlled deprecation while the Go implementation (`nemesis312/bc-dev-memory`) is the strategic backend for active `bc-agentic` workflows.
+>
+> - Use **`bc-dev-memory`** for new setups and active operations.
+> - This repo is **frozen for non-critical work** (critical fixes only, by exception).
+> - Archival is **time-gated** after stabilization review (not immediate).
+>
+> Full policy and migration path: see [`DEPRECATION.md`](DEPRECATION.md).
+
 > **Give your AI a brain that survives context resets.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
